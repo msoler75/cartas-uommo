@@ -5,7 +5,7 @@
     </div>
 
     <div
-      class="w-full bg-yellow-100 grid"
+      class="absolute bg-yellow-800 flex flex-wrap pointer-events-none"
       :style="{ height: constants.CARD_HEIGHT + 'px' }"
     >
       <CardSimpleContainer
@@ -17,15 +17,69 @@
       </CardSimpleContainer>
     </div>
 
-    <div
-      class="container h-screen flex flex-col justify-center items-center"
-      :style="{
-        transform: `translateY(calc(50vh - ${
-          constants.CARD_HEIGHT + constants.CARD_ELEVATION
-        }px - ${constants.SPACE_BOTTOM} + ${constants.CIRCLE_RADIUS}px))`,
-      }"
-    >
+    <div class="inset-0 flex justify-center items-center bg-pink-200 z-50 pointer-events-none"
+        :style="{
+            height: '60vh'
+        }">
       <div
+        id="show-card-container"
+        class="bg-green-200 z-30"
+        :style="{
+          width: constants.CARD_WIDTH + 'px',
+          height: constants.CARD_HEIGHT + 'px',
+        }"
+      ></div>
+    </div>
+
+    <TransitionFade>
+      <div
+        class="absolute inset-0 bg-black/30 backdrop-blur-md flex justify-center items-center z-40"
+        v-if="showModal"
+        @click="closeShow"
+      >
+        <div
+          class="flex flex-wrap justify-center gap-4 p-12 max-h-screen overflow-y-auto bg-teal-300"
+        >
+          <CardSimpleContainer
+            id="show-card-detail-container"
+            :width="constants.SHOW_CARD_WIDTH"
+            :height="constants.SHOW_CARD_HEIGHT"
+            class="bg-pink-400"
+          ></CardSimpleContainer>
+
+          <div
+            :style="{ maxWidth: constants.SHOW_CARD_DESCRIPTION_WIDTH + 'px' }"
+            class="bg-gray-100 p-5 rounded-lg"
+          >
+            Lorem ipsum dolor sit amet consectetur adipisicing elit. Quisquam,
+            quod. Lorem ipsum dolor sit amet consectetur adipisicing elit.
+            Quisquam, quod. Lorem ipsum dolor sit amet consectetur adipisicing
+            elit. Quisquam, quod. Lorem ipsum dolor sit amet consectetur
+            adipisicing elit. Quisquam, quod. Lorem ipsum dolor sit amet
+            consectetur adipisicing elit. Quisquam, quod. Lorem ipsum dolor sit
+            amet consectetur adipisicing elit. Quisquam, quod. Lorem ipsum dolor
+            sit amet consectetur adipisicing elit. Quisquam, quod. Lorem ipsum
+            dolor sit amet consectetur adipisicing elit. Quisquam, quod. Lorem
+            ipsum dolor sit amet consectetur adipisicing elit. Quisquam, quod.
+            Lorem ipsum dolor sit amet consectetur adipisicing elit. Quisquam,
+            quod. Lorem ipsum dolor sit amet consectetur adipisicing elit.
+            Quisquam, quod. Lorem ipsum dolor sit amet consectetur adipisicing
+            elit. Quisquam, quod. Lorem ipsum dolor sit amet consectetur
+            adipisicing elit. Quisquam, quod. Lorem ipsum dolor sit amet
+            consectetur adipisicing elit. Quisquam, quod. Lorem ipsum dolor sit
+            amet consectetur adipisicing elit. Quisquam, quod. Lorem ipsum dolor
+            sit amet consectetur adipisicing elit. Quisquam, quod.
+          </div>
+        </div>
+      </div>
+    </TransitionFade>
+
+ 
+
+    <div
+      class="h-screen flex flex-col  bg-blue-300">
+      <div
+       class="bg-red-300"
         :style="{
           transition: 'all .4s ease-out',
           transform: `rotate(${user_rotate_deg}deg)`,
@@ -56,7 +110,7 @@
           :card-number="container.number"
         >
           <Card
-            @click="animate($event, container.number)"
+            @click="sacarCarta($event, container.number)"
             :ref="
               (el) => {
                 const idx = container ? container.number : 0;
@@ -72,11 +126,12 @@
 </template>
 
 <script setup>
-import { onMounted, ref, computed } from "vue";
+import { onMounted, ref, computed, nextTick } from "vue";
 import useConstants from "../assets/constants.js";
 import Card from "./Card.vue";
 import CardSimpleContainer from "./CardSimpleContainer.vue";
 import CardSelectionContainer from "./CardSelectionContainer.vue";
+import TransitionFade from "./TransitionFade.vue";
 import { useGsap } from "../assets/useGsap.js";
 import { Flip } from "gsap/Flip";
 
@@ -84,11 +139,11 @@ const gsap = useGsap();
 
 const props = defineProps({
   cards: Array,
-})
+});
 
-const cardRefs = ref({})
+const cardRefs = ref({});
 
-const constants = useConstants()
+const constants = useConstants();
 
 const user_rotate_deg = computed(() => {
   //if(props.moving)
@@ -101,9 +156,9 @@ const user_rotate_deg = computed(() => {
   return (v / arcLength) * constants.ARC_DEGREES;
 });
 
-const dragged = ref(0)
+const dragged = ref(0);
 
-const selected_cards = ref([])
+const selected_cards = ref([]);
 
 const card_positions = computed(() => {
   const w = constants.CARD_WIDTH;
@@ -125,16 +180,16 @@ const card_positions = computed(() => {
       x: Math.sin((number / n) * ar + sr) * r + r + (h + e) / 2 - w / 2,
       y: -Math.cos((number / n) * ar + sr) * r + r,
       rotate: (number * ad) / n + rd,
-    }
-  })
-})
+    };
+  });
+});
 
 const active_card_number = computed(() => {
   return Math.round(
     (props.cards.length * ((-user_rotate_deg.value + 36000) % 360)) /
       constants.ARC_DEGREES
-  )
-})
+  );
+});
 
 /*
 a = N * r / 360
@@ -160,32 +215,112 @@ function rotate_to_card(target) {
     difference += props.cards.length;
   }
 
-  
   const perimeter = constants.CIRCLE_RADIUS * 2 * Math.PI;
   const arcLength = (constants.ARC_DEGREES / 360) * perimeter;
   const gap = arcLength / props.cards.length;
-  
-  const newDraggedValue = dragged.value -  gap * difference
 
+  const newDraggedValue = dragged.value - gap * difference;
 
   // Actualiza dragged.value
   dragged.value = newDraggedValue;
 }
 
-
 let animating = false;
 
-const animate = (event, number) => {
+const almacenarCarta = (card, number, callback) => {
+  if (selected_cards.value.includes(number)) return;
+
+  selected_cards.value.push(number);
+  nextTick(() => {
+    const state = Flip.getState(card);
+    // Aquí puedes agregar cualquier lógica adicional que necesites
+    console.log("Animación completada, nuevo estado capturado");
+    const container = document.querySelector(
+      '.card-container[number="' + number + '"]'
+    );
+
+    container.appendChild(card);
+
+    // sacarCarta from the previous state to the current one:
+    Flip.from(state, {
+      duration: 0.5,
+      // y: "+=" + constants.SHOW_CARD_Y_OFFSET,
+      ease: "power1.inOut",
+      // absolute: true,
+      onComplete: () => {
+        if (callback) callback();
+      },
+    });
+  });
+};
+
+let cardShowing = null;
+let numberShowing = null;
+
+const closeShow = () => {
+  showModal.value = false;
+  almacenarCarta(cardShowing, numberShowing, () => {
+    cardShowing = null;
+    numberShowing = null;
+  });
+};
+
+const mostrarCarta = (card, number, callback) => {
+  // showModal.value = true;
+  nextTick(() => {
+    // Wait for modal show
+    cardShowing = card;
+    numberShowing = number;
+
+    // cardRefs.value[number].embed();
+
+    /*gsap.to(card, {
+      y: 0,
+      duration: 0,
+    });*/
+
+    const state = Flip.getState(card);
+    const container = document.querySelector("#show-card-container");
+    container.appendChild(card);
+    //if(false)
+    Flip.from(state, {
+      // y: "+=" + constants.SHOW_CARD_Y_OFFSET,
+      //width: constants.SHOW_CARD_WIDTH,
+      //height: constants.SHOW_CARD_HEIGHT,
+      scale: true,
+      absolute: true,
+      duration: 0.6,
+      ease: "power1.inOut",
+      onComplete: () => {
+        animating = false;
+        cardRefs.value[number].flip(() => {
+          //showModal.value = true;
+          //if (callback) callback();
+        });
+        // if (callback) callback();
+      },
+    });
+  });
+};
+
+const sacarCarta = (event, number) => {
   if (animating) return;
-  console.log("animate", number, "current", active_card_number.value);
+
+  const card = event.target;
+  console.log("sacarCarta", number, "current", active_card_number.value);
+
+  if (selected_cards.value.includes(number)) {
+    mostrarCarta(card, number);
+    return;
+  }
 
   if (number != active_card_number.value) {
     animating = true;
     rotate_to_card(number);
     setTimeout(() => {
       animating = false;
-      // Llamar a animate nuevamente para verificar si se alcanzó el número activo
-      animate(event, number);
+      // Llamar a sacarCarta nuevamente para verificar si se alcanzó el número activo
+      sacarCarta(event, number);
       return;
     }, 500);
     return;
@@ -193,79 +328,64 @@ const animate = (event, number) => {
 
   animating = true;
 
-  const card = event.target;
-  selected_cards.value.push(number);
+  // selected_cards.value.push(number);
   // const state = Flip.getState(event.target);
 
-  gsap
+  /* gsap
     .timeline()
     .to(card, {
-      y: "-=300", // Subtracts 300px on the Y-axis
+     // y: "-=" + constants.SHOW_CARD_Y_OFFSET, // Subtracts 300px on the Y-axis
       duration: 0.6,
       ease: "power2.out", // Natural easing for the movement
-    })
-    /*
+    })*/
+  /*
     .to(card, {
       rotationY: 180,
       duration: 0.9,
       ease: "power2.inOut", // Smooth easing for the rotation
     })
       */
-    .to(card, {
-      zIndex: 0,
-      duration: 0.1,
-    })
-    .call(() => {
+
+  /*.call(() => {
       // Tu función de callback aquí
       console.log("Animación de movimiento completada");
       cardRefs.value[number].flip(() => {
-        console.log("flip callback");
-        // Este código se ejecutará cuando la animación termine
-        const state = Flip.getState(card);
-        // Aquí puedes agregar cualquier lógica adicional que necesites
-        console.log("Animación completada, nuevo estado capturado");
-        const container = document.querySelector(
-          '.card-container[number="' + number + '"]'
-        );
-        container.appendChild(card);
-        // animate from the previous state to the current one:
-        Flip.from(state, {
-          duration: 0.5,
-          ease: "power1.inOut",
-          // absolute: true,
-          onComplete: () => {
-            animating = false;
-            console.log("Animación de movimiento completada");
-          },
-        })
-      })
-      // Puedes realizar cualquier acción adicional aquí
-    })
-}
+        mostrarCarta(card, number, () => {
+          animating = false;
+        });
+      });
+    });
+    */
+  mostrarCarta(card, number, () => {
+    animating = false;
+  });
+};
 
-const offset_start = ref(0)
-const temporal_offset = ref(0)
-const clicked = ref(false)
-const x_start = ref(0)
+const showModal = ref(false);
 
+// Mouse dragging:
+const offset_start = ref(0);
+const temporal_offset = ref(0);
+const clicked = ref(false);
+const x_start = ref(0);
 
-onMounted(()=>{
-    document.addEventListener('mousedown', (event) => {
-    clicked.value = true
-    x_start.value = event.clientX
-    offset_start.value = dragged.value
-  })
-  document.addEventListener('mouseup', (event) => {
-    clicked.value = false
-    dragged.value = offset_start.value + temporal_offset.value
-    temporal_offset.value = 0
-  })
-  document.addEventListener('mousemove', (event) => {
-    if(clicked.value) {
-      const dx = event.clientX - x_start.value
-      temporal_offset.value = dx
-      dragged.value = offset_start.value + temporal_offset.value
+onMounted(() => {
+  document.addEventListener("mousedown", (event) => {
+    clicked.value = true;
+    x_start.value = event.clientX;
+    offset_start.value = dragged.value;
+  });
+  document.addEventListener("mouseup", (event) => {
+    clicked.value = false;
+    dragged.value = offset_start.value + temporal_offset.value;
+    temporal_offset.value = 0;
+  });
+  document.addEventListener("mousemove", (event) => {
+    if (clicked.value) {
+      const dx = event.clientX - x_start.value;
+      temporal_offset.value = dx;
+      dragged.value = offset_start.value + temporal_offset.value;
     }
-  })
-})
+  });
+});
 </script>

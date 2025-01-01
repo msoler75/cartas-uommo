@@ -1,5 +1,11 @@
 <template>
-  <div ref="cardDom">
+  <div ref="cardDom" class="pointer-events-none"
+  :style="{
+    width: `${props.width}px`,
+    height: `${props.height}px`,
+    transform: `translate(${props.x}px, ${props.y}px) rotate(${props.r}deg)`,
+  }"
+  >
     <slot />
   </div>
 </template>
@@ -25,15 +31,6 @@ const props = defineProps({
 const cardDom = ref(null);
 
 onMounted(() => {
-  gsap.to(cardDom.value, {
-    duration: 0,
-    width: props.width,
-    height: props.height,
-    x: props.x,
-    y: props.y,
-    rotation: props.r,
-  });
-
   updateCardPos(true);
 });
 

@@ -2,7 +2,10 @@ import { reactive } from 'vue';
 
 const useConstants = () => {
   return reactive({
-    CARD_ELEVATION: 100, // Card elevation in pixels
+    SHOW_CARD_Y_OFFSET: 300, // Card moving up when shown
+    SHOW_CARD_ZOOM: 1.8,
+    SHOW_CARD_DESCRIPTION_WIDTH: 500,
+    CARD_ELEVATION: 80, // Card elevation in pixels
     CARD_WIDTH: 200, // Card width
     CARD_HEIGHT: 300, // Card height
     CIRCLE_RADIUS: 600, // Circle radius in pixels
@@ -20,6 +23,14 @@ const useConstants = () => {
     
     get ROTATION_DEGREES() {
       return 0; // Initial card rotation
+    },
+
+    get SHOW_CARD_WIDTH() {
+      return this.CARD_WIDTH * this.SHOW_CARD_ZOOM
+    },
+
+    get SHOW_CARD_HEIGHT() {
+      return this.CARD_HEIGHT * this.SHOW_CARD_ZOOM
     }
   });
 };

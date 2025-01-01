@@ -1,31 +1,37 @@
 <template>
   <div
     ref="elem"
-    class="card bg-red-500 outline outline-black"
+    class="card pointer-events-auto"
     :style="{
-      width: constants.CARD_WIDTH + 'px',
-      height: constants.CARD_HEIGHT + 'px',
+      width: embedded ? '100%' : constants.CARD_WIDTH + 'px',
+      height: embedded ? '100%' : constants.CARD_HEIGHT + 'px',
     }"
   >
-    {{ number }}
+    <div class="bg-red-500 h-full outline outline-black card-inner pointer-events-none perspective-1000" 
+    :style="{
+        transform: flipped ? 'rotateY(180deg)': 'rotateY(0deg)', 
+        transition: 'transform 0.5s',
+    }">
+      <div class="card-front">{{ number }}</div>
+      <div class="card-back">Reverso</div>
+    </div>
   </div>
 </template>
 
 <script setup>
 import { ref, onMounted } from "vue";
 import useConstants from "../assets/constants.js";
-import { useGsap } from "../assets/useGsap.js";
-
-const gsap = useGsap();
 
 const props = defineProps({
   number: Number,
   startFlipped: { type: Boolean, default: true },
+  startEmbedded: { type: Boolean, default: false },
 });
 
 const constants = useConstants();
 
 const flipped = ref(props.startFlipped);
+const embedded = ref(props.startEmbedded);
 
 const flip = (callback) => {
   console.log("card.flip", props.number);
@@ -33,23 +39,11 @@ const flip = (callback) => {
   updateState(false, callback);
 };
 
-const elem = ref(null);
-
-const updateState = (instant, callback) => {
-  gsap.to(elem.value, {
-    rotationY: flipped.value ? 180 : 0,
-    duration: instant ? 0 : 0.9,
-    ease: "power2.inOut", // Smooth easing for the rotation
-    onComplete: () => {
-      // Emit the event after the flip animation is done
-      if (!instant && callback && callback instanceof Function) callback();
-    },
-  });
+const embed = () => {
+  embedded.value = true;
 };
 
-onMounted(() => {
-  updateState(true);
-});
+const elem = ref(null);
 
-defineExpose({ flip });
+defineExpose({ flip, embed });
 </script>

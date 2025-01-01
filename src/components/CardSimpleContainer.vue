@@ -1,8 +1,11 @@
 <template>
-  <div class="card-container" :style="{
-    width: `${constants.CARD_WIDTH}px`,
-    height: `${constants.CARD_HEIGHT}px`,
-  }">
+  <div
+    class="card-container bg-pink-800"
+    :style="{
+      width: (width ? width : constants.CARD_WIDTH) + 'px',
+      height: (height ? height : constants.CARD_HEIGHT) + 'px',
+    }"
+  >
     <slot />
   </div>
 </template>
@@ -13,7 +16,7 @@ import useConstants from "../assets/constants.js";
 const constants = useConstants();
 
 const props = defineProps({
-  cardNumber: Number, // para referencia
+  width: { type: Number, default: 0 },
+  height: { type: Number, default: 0 },
 });
-
 </script>
