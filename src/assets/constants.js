@@ -2,12 +2,12 @@ import { reactive } from 'vue';
 
 const useConstants = () => {
   return reactive({
-    CARD_ELEVATION: 70, // Card elevation in pixels
-    CARD_WIDTH: 20, // Card width
-    CARD_HEIGHT: 200, // Card height
-    CIRCLE_RADIUS: 800, // Circle radius in pixels
-    ARC_DEGREES: 345, // Degrees of the circle where cards are extended
-    SPACE_BOTTOM: '10vh', // space between the bottom of the screen and the top card
+    CARD_ELEVATION: 100, // Card elevation in pixels
+    CARD_WIDTH: 200, // Card width
+    CARD_HEIGHT: 300, // Card height
+    CIRCLE_RADIUS: 600, // Circle radius in pixels
+    ARC_DEGREES: 330, // Degrees of the circle where cards are extended
+    SPACE_BOTTOM: '3vh', // space between the bottom of the screen and the top card
     START_DEGREES : 0, // Start degrees where cards are extended
 
     get ARC_RADIANS() {
