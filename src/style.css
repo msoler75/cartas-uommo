@@ -17,3 +17,7 @@ body {
 body {
   display: grid;
 }
+
+body {
+  --CARD_HEIGHT: 300px;
+}
