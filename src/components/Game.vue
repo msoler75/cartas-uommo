@@ -127,12 +127,12 @@
 
 <script setup>
 import { onMounted, ref, computed, nextTick } from "vue";
-import useConstants from "../assets/constants.js";
+import useConstants from "../lib/constants.js";
 import Card from "./Card.vue";
 import CardSimpleContainer from "./CardSimpleContainer.vue";
 import CardSelectionContainer from "./CardSelectionContainer.vue";
+import { useGsap } from "../lib/useGsap.js";
 import TransitionFade from "./TransitionFade.vue";
-import { useGsap } from "../assets/useGsap.js";
 import { Flip } from "gsap/Flip";
 
 const gsap = useGsap();

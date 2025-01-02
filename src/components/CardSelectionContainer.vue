@@ -11,7 +11,7 @@
 </template>
 
 <script setup>
-import { useGsap } from "../assets/useGsap.js";
+import { useGsap } from "../lib/useGsap.js";
 import { ref, watch, onMounted } from "vue";
 
 const gsap = useGsap();

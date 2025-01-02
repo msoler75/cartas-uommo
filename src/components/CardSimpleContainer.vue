@@ -11,7 +11,7 @@
 </template>
 
 <script setup>
-import useConstants from "../assets/constants.js";
+import useConstants from "../lib/constants.js";
 
 const constants = useConstants();
 
