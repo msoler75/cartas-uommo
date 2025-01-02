@@ -369,23 +369,43 @@ const temporal_offset = ref(0);
 const clicked = ref(false);
 const x_start = ref(0);
 
-onMounted(() => {
-  document.addEventListener("mousedown", (event) => {
+function drag_start(event) {
+    console.log("drag_start");
     clicked.value = true;
     x_start.value = event.clientX;
+    // si es evento touch, entonces...
+    if (event.touches) {
+      x_start.value = event.touches[0].clientX;
+    }
     offset_start.value = dragged.value;
-  });
-  document.addEventListener("mouseup", (event) => {
-    clicked.value = false;
-    dragged.value = offset_start.value + temporal_offset.value;
-    temporal_offset.value = 0;
-  });
-  document.addEventListener("mousemove", (event) => {
+}
+
+function drag_move(event) {
+    console.log("drag_move");
     if (clicked.value) {
-      const dx = event.clientX - x_start.value;
+      let dx = event.clientX - x_start.value;
+    // si es evento touch, entonces...
+        if (event.touches) {
+            dx = event.touches[0].clientX - x_start.value;
+        }
       temporal_offset.value = dx;
       dragged.value = offset_start.value + temporal_offset.value;
     }
-  });
+}
+
+function drag_end(event) {
+    console.log("drag_end");
+    clicked.value = false;
+    dragged.value = offset_start.value + temporal_offset.value;
+    temporal_offset.value = 0;
+}
+
+onMounted(() => {
+  document.addEventListener("mousedown", drag_start);
+  document.addEventListener("mouseup", drag_end);
+  document.addEventListener("mousemove", drag_move);
+  document.addEventListener("touchstart", drag_start);
+  document.addEventListener("touchend", drag_end);
+  document.addEventListener("touchmove", drag_move);
 });
 </script>
