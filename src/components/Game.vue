@@ -17,13 +17,15 @@
       </CardSimpleContainer>
     </div>
 
-    <div class="inset-0 flex justify-center items-center bg-pink-200 z-50 pointer-events-none"
-        :style="{
-            height: '60vh'
-        }">
+    <div
+      class="inset-0 flex justify-center items-center bg-pink-200 z-50 pointer-events-none"
+      :style="{
+        height: '60vh',
+      }"
+    >
       <div
         id="show-card-container"
-        class="bg-green-200 z-30"
+        class="z-30"
         :style="{
           width: constants.CARD_WIDTH + 'px',
           height: constants.CARD_HEIGHT + 'px',
@@ -74,12 +76,9 @@
       </div>
     </TransitionFade>
 
- 
-
-    <div
-      class="h-screen flex flex-col  bg-blue-300">
+    <div class="h-screen flex flex-col bg-blue-300">
       <div
-       class="bg-red-300"
+        class="bg-red-300"
         :style="{
           transition: 'all .4s ease-out',
           transform: `rotate(${user_rotate_deg}deg)`,
@@ -128,6 +127,7 @@
 <script setup>
 import { onMounted, ref, computed, nextTick } from "vue";
 import useConstants from "../lib/constants.js";
+import { distributeCards } from "../lib/game.js";
 import Card from "./Card.vue";
 import CardSimpleContainer from "./CardSimpleContainer.vue";
 import CardSelectionContainer from "./CardSelectionContainer.vue";
@@ -160,29 +160,7 @@ const dragged = ref(0);
 
 const selected_cards = ref([]);
 
-const card_positions = computed(() => {
-  const w = constants.CARD_WIDTH;
-  const h = constants.CARD_HEIGHT;
-  const ad = constants.ARC_DEGREES;
-  const ar = constants.ARC_RADIANS;
-  const rd = constants.ROTATION_DEGREES;
-  const sr = constants.START_RADIANS;
-  const n = props.cards.length;
-  const r = constants.CIRCLE_RADIUS;
-  const e = constants.CARD_ELEVATION;
-  return props.cards.map((c, number) => {
-    return {
-      ...c,
-      number,
-      width: w,
-      height: h + e,
-      pos: (ad * number) / n,
-      x: Math.sin((number / n) * ar + sr) * r + r + (h + e) / 2 - w / 2,
-      y: -Math.cos((number / n) * ar + sr) * r + r,
-      rotate: (number * ad) / n + rd,
-    };
-  });
-});
+const card_positions = computed(() => distributeCards(props.cards));
 
 const active_card_number = computed(() => {
   return Math.round(
@@ -266,40 +244,34 @@ const closeShow = () => {
 };
 
 const mostrarCarta = (card, number, callback) => {
-  // showModal.value = true;
-  nextTick(() => {
-    // Wait for modal show
-    cardShowing = card;
-    numberShowing = number;
+  cardShowing = card;
+  numberShowing = number;
 
-    // cardRefs.value[number].embed();
+  const state = Flip.getState(card);
+  const container = document.querySelector("#show-card-container");
 
-    /*gsap.to(card, {
-      y: 0,
-      duration: 0,
-    });*/
-
-    const state = Flip.getState(card);
-    const container = document.querySelector("#show-card-container");
-    container.appendChild(card);
-    //if(false)
-    Flip.from(state, {
-      // y: "+=" + constants.SHOW_CARD_Y_OFFSET,
-      //width: constants.SHOW_CARD_WIDTH,
-      //height: constants.SHOW_CARD_HEIGHT,
-      scale: true,
-      absolute: true,
-      duration: 0.6,
-      ease: "power1.inOut",
-      onComplete: () => {
-        animating = false;
-        cardRefs.value[number].flip(() => {
-          //showModal.value = true;
-          //if (callback) callback();
-        });
-        // if (callback) callback();
-      },
-    });
+  Flip.fit(card, container)
+  animating = false;
+  //container.appendChild(card);
+  //if(false)
+  Flip.from(state, {
+    // y: "+=" + constants.SHOW_CARD_Y_OFFSET,
+    //width: constants.SHOW_CARD_WIDTH,
+    //height: constants.SHOW_CARD_HEIGHT,
+    scale: true,
+    absolute: true,
+    duration: 0.6,
+    ease: "power1.inOut",
+    onComplete: () => {
+      animating = false;
+      cardRefs.value[number].flip(() => {
+        //showModal.value = true;
+        container.appendChild(card);
+        Flip.fit(card, container)
+        //if (callback) callback();
+      });
+      // if (callback) callback();
+    },
   });
 };
 
@@ -328,34 +300,6 @@ const sacarCarta = (event, number) => {
 
   animating = true;
 
-  // selected_cards.value.push(number);
-  // const state = Flip.getState(event.target);
-
-  /* gsap
-    .timeline()
-    .to(card, {
-     // y: "-=" + constants.SHOW_CARD_Y_OFFSET, // Subtracts 300px on the Y-axis
-      duration: 0.6,
-      ease: "power2.out", // Natural easing for the movement
-    })*/
-  /*
-    .to(card, {
-      rotationY: 180,
-      duration: 0.9,
-      ease: "power2.inOut", // Smooth easing for the rotation
-    })
-      */
-
-  /*.call(() => {
-      // Tu función de callback aquí
-      console.log("Animación de movimiento completada");
-      cardRefs.value[number].flip(() => {
-        mostrarCarta(card, number, () => {
-          animating = false;
-        });
-      });
-    });
-    */
   mostrarCarta(card, number, () => {
     animating = false;
   });
@@ -370,34 +314,34 @@ const clicked = ref(false);
 const x_start = ref(0);
 
 function drag_start(event) {
-    console.log("drag_start");
-    clicked.value = true;
-    x_start.value = event.clientX;
-    // si es evento touch, entonces...
-    if (event.touches) {
-      x_start.value = event.touches[0].clientX;
-    }
-    offset_start.value = dragged.value;
+  console.log("drag_start");
+  clicked.value = true;
+  x_start.value = event.clientX;
+  // si es evento touch, entonces...
+  if (event.touches) {
+    x_start.value = event.touches[0].clientX;
+  }
+  offset_start.value = dragged.value;
 }
 
 function drag_move(event) {
-    console.log("drag_move");
-    if (clicked.value) {
-      let dx = event.clientX - x_start.value;
+  console.log("drag_move");
+  if (clicked.value) {
+    let dx = event.clientX - x_start.value;
     // si es evento touch, entonces...
-        if (event.touches) {
-            dx = event.touches[0].clientX - x_start.value;
-        }
-      temporal_offset.value = dx;
-      dragged.value = offset_start.value + temporal_offset.value;
+    if (event.touches) {
+      dx = event.touches[0].clientX - x_start.value;
     }
+    temporal_offset.value = dx;
+    dragged.value = offset_start.value + temporal_offset.value;
+  }
 }
 
 function drag_end(event) {
-    console.log("drag_end");
-    clicked.value = false;
-    dragged.value = offset_start.value + temporal_offset.value;
-    temporal_offset.value = 0;
+  console.log("drag_end");
+  clicked.value = false;
+  dragged.value = offset_start.value + temporal_offset.value;
+  temporal_offset.value = 0;
 }
 
 onMounted(() => {

@@ -34,6 +34,9 @@ const embedded = ref(props.startEmbedded);
 
 const flip = (callback) => {
   flipped.value = !flipped.value;
+  setTimeout(()=> {
+      if(callback)callback()
+    }, 500)
 };
 
 const embed = () => {
